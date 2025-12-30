@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,9 +26,9 @@ SECRET_KEY = 'django-insecure-p7rjk2cg-ymow$(&!%1_4(v^3hro+5)0+5hq=(tjpd5ulhl3yr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['spirit-beads.keycasey.com']
+ALLOWED_HOSTS = ['spirit-beads.keycasey.com', 'localhost']
 
-CSRF_TRUSTED_ORIGINS = ['https://spirit-beads.keycasey.com']
+CSRF_TRUSTED_ORIGINS = ['https://spirit-beads.keycasey.com', 'http://localhost']
 
 # Application definition
 
@@ -41,6 +42,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'products',
+    'payments',
+    'orders',
 ]
 
 MIDDLEWARE = [
@@ -130,6 +133,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
+    "http://localhost:8000",
     "http://spirit-beads.keycasey.com",
     "https://spirit-beads.keycasey.com",
 ]
@@ -148,3 +152,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Static files settings
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Stripe settings
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+FRONTEND_URL = os.getenv("FRONTEND_URL")

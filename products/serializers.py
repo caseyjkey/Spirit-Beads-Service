@@ -38,6 +38,10 @@ class ProductListSerializer(serializers.ModelSerializer):
         ]
 
     def get_primary_image(self, obj):
+        # First check if product has a direct image
+        if obj.image:
+            return obj.image.url
+        # Then check ProductImage relationships
         primary_image = obj.images.filter(is_primary=True).first()
         if primary_image:
             return primary_image.image.url
