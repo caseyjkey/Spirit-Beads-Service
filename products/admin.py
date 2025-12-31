@@ -19,12 +19,18 @@ class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
     list_display = (
         "name",
-        "price_decimal",
+        "formatted_price",
         "currency",
         "stripe_price_id",
         "is_active",
     )
     actions = ["sync_prices_to_stripe"]
+
+    def formatted_price(self, obj):
+        """Display price in dollar format"""
+        return f"${obj.price_decimal:.2f}"
+    formatted_price.short_description = "Price"
+    formatted_price.admin_order_field = "price"
 
     @admin.action(description="Create / update Stripe Price ID")
     def sync_prices_to_stripe(self, request, queryset):
@@ -35,7 +41,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ['pattern', 'is_sold_out', 'is_active', 'created_at']
     search_fields = ['name', 'custom_pattern']
     prepopulated_fields = {'slug': ('name',)}
-    readonly_fields = ['created_at', 'updated_at', 'stripe_product_id', 'stripe_price_id']
+    readonly_fields = ['created_at', 'updated_at', 'stripe_product_id', 'stripe_price_id', 'currency']
     inlines = [ProductImageInline]
     
     class Media:
@@ -50,7 +56,7 @@ class ProductAdmin(admin.ModelAdmin):
         }),
         ('Pricing & Inventory', {
             'fields': ('price', 'currency', 'inventory_count', 'is_sold_out', 'is_active'),
-            'description': 'Enter price in dollars (e.g., 45.99). Will be stored as cents for Stripe.'
+            'description': 'Enter price in decimal format (e.g., 45.99). Currency is fixed to USD. Will be stored as cents for Stripe.'
         }),
         ('Stripe Integration', {
             'fields': ('stripe_product_id', 'stripe_price_id'),
@@ -59,8 +65,9 @@ class ProductAdmin(admin.ModelAdmin):
         ('Shipping', {
             'fields': ('weight_ounces',)
         }),
-        ('Media', {
-            'fields': ('image',)
+        ('Catalog Image', {
+            'fields': ('image',),
+            'description': 'This image is displayed in the product catalog and list views.'
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),

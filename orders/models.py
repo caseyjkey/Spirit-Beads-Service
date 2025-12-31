@@ -37,23 +37,30 @@ class Order(models.Model):
             try:
                 old_order = Order.objects.get(pk=self.pk)
                 if old_order.status != 'paid':
+                    print(f"Order {self.id} status changed from {old_order.status} to paid - updating inventory")
                     self._update_inventory()
+                else:
+                    print(f"Order {self.id} already paid - no inventory update")
             except Order.DoesNotExist:
                 pass  # Handle case where order doesn't exist yet
         super().save(*args, **kwargs)
 
     def _update_inventory(self):
         """Update product inventory when order is paid"""
+        print(f"Updating inventory for order {self.id}")
         for item in self.items.all():
             product = item.product
+            print(f"Updating product {product.name}: current inventory {product.inventory_count}, quantity {item.quantity}")
             product.inventory_count -= item.quantity
             
             # Mark as sold out if inventory reaches 0
             if product.inventory_count <= 0:
                 product.inventory_count = 0
                 product.is_sold_out = True
+                print(f"Product {product.name} marked as sold out")
             
             product.save()
+            print(f"Product {product.name} updated: new inventory {product.inventory_count}, sold_out: {product.is_sold_out}")
 
 class OrderItem(models.Model):
     order = models.ForeignKey(

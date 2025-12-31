@@ -27,6 +27,16 @@ class Product(models.Model):
         ('custom', 'Custom Pattern'),
     ]
 
+    CURRENCY_CHOICES = [
+        ('usd', 'USD - US Dollar'),
+        ('eur', 'EUR - Euro'),
+        ('gbp', 'GBP - British Pound'),
+        ('cad', 'CAD - Canadian Dollar'),
+        ('aud', 'AUD - Australian Dollar'),
+        ('jpy', 'JPY - Japanese Yen'),
+        ('chf', 'CHF - Swiss Franc'),
+    ]
+
     id = models.CharField(primary_key=True, max_length=100)
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=200, unique=True)
@@ -38,6 +48,7 @@ class Product(models.Model):
     )
     currency = models.CharField(
         max_length=10,
+        choices=CURRENCY_CHOICES,
         default="usd"
     )
     
@@ -90,6 +101,33 @@ class Product(models.Model):
     def price_decimal(self):
         """Convert cents to decimal for display purposes"""
         return Decimal(self.price) / Decimal(100)
+
+    def save(self, *args, **kwargs):
+        """Override save to sync price changes to Stripe"""
+        is_new = self.pk is None
+        old_price = None
+        
+        if not is_new:
+            # Get the current price from database
+            try:
+                old_product = Product.objects.get(pk=self.pk)
+                old_price = old_product.price
+            except Product.DoesNotExist:
+                pass
+        
+        # Save the product first
+        super().save(*args, **kwargs)
+        
+        # Sync to Stripe if price changed or product is new
+        if is_new or (old_price is not None and old_price != self.price):
+            from .services.stripe_sync import ensure_stripe_product_and_price
+            try:
+                ensure_stripe_product_and_price(self)
+            except Exception as e:
+                # Log error but don't prevent save
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to sync product {self.id} to Stripe: {e}")
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
