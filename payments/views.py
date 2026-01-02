@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 # Ensure environment variables are loaded at module level
 load_dotenv()
 
+@csrf_exempt
 @api_view(["POST"])
 def create_checkout_session(request):
     cart_items = request.data.get("items")
