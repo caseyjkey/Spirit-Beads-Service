@@ -37,3 +37,6 @@ Thumbs.db
 
 # Local database
 db.sqlite3
+
+# Product images
+media/products/

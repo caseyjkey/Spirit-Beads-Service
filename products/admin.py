@@ -24,7 +24,7 @@ class ProductAdmin(admin.ModelAdmin):
         "stripe_price_id",
         "is_active",
     )
-    actions = ["sync_prices_to_stripe"]
+    actions = ["sync_prices_to_stripe", "archive_products"]
 
     def formatted_price(self, obj):
         """Display price in dollar format"""
@@ -52,6 +52,13 @@ class ProductAdmin(admin.ModelAdmin):
                 logger.exception(f"Failed to sync product {product.id} to Stripe: {e}")
                 failed += 1
         self.message_user(request, f"Stripe sync complete: {success} succeeded, {failed} failed. Check logs for details.")
+    
+    @admin.action(description="Archive selected products")
+    def archive_products(self, request, queryset):
+        """Archive selected products by setting is_active to False"""
+        count = queryset.count()
+        queryset.update(is_active=False)
+        self.message_user(request, f"Successfully archived {count} product(s). They will no longer appear in the store.")
     
     list_filter = ['pattern', 'is_sold_out', 'is_active', 'created_at']
     search_fields = ['name', 'custom_pattern']
