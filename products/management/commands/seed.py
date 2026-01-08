@@ -175,7 +175,7 @@ class Command(BaseCommand):
         # Show categories with product counts
         self.stdout.write('\nProducts by Category:')
         for category in Category.objects.all():
-            count = Product.objects.filter(custom_pattern=category.name).count()
+            count = Product.objects.filter(category=category).count()
             status = "EMPTY" if count == 0 else f"{count} products"
             self.stdout.write(f'  - {category.name}: {status}')
         

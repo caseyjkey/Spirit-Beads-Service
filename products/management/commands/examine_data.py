@@ -10,10 +10,10 @@ class Command(BaseCommand):
         for category in categories:
             self.stdout.write(f'  {category.name}')
         
-        self.stdout.write('\n=== PRODUCTS WITH CUSTOM PATTERNS ===')
-        custom_products = Product.objects.filter(pattern='custom')
-        for product in custom_products:
-            self.stdout.write(f'  {product.name} - {product.custom_pattern}')
+        self.stdout.write('\n=== PRODUCTS WITH CATEGORIES ===')
+        products_with_categories = Product.objects.filter(category__isnull=False)
+        for product in products_with_categories:
+            self.stdout.write(f'  {product.name} - {product.category.name if product.category else "None"}')
         
         self.stdout.write(f'\nTotal categories: {categories.count()}')
-        self.stdout.write(f'Total products with custom patterns: {custom_products.count()}')
+        self.stdout.write(f'Total products with categories: {products_with_categories.count()}')

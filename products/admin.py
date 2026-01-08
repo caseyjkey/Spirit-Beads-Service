@@ -66,12 +66,6 @@ class ProductAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at', 'stripe_product_id', 'stripe_price_id', 'currency']
     inlines = [ProductImageInline]
     
-    class Media:
-        js = ('products/js/admin_custom_pattern.js', 'products/js/admin_custom_pattern_vanilla.js')
-        css = {
-            'all': ('products/css/admin_custom_pattern.css',)
-        }
-    
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'slug', 'lighter_type', 'pattern', 'category', 'description')
