@@ -92,7 +92,7 @@ class Product(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.category.name if self.category else 'Uncategorized'}"
 
 
     @property
