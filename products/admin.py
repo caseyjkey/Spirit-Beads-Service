@@ -20,6 +20,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "category",
+        "lighter_type_display",
         "formatted_price",
         "currency",
         "stripe_price_id",
@@ -32,6 +33,12 @@ class ProductAdmin(admin.ModelAdmin):
         return f"${obj.price_decimal:.2f}"
     formatted_price.short_description = "Price"
     formatted_price.admin_order_field = "price"
+
+    def lighter_type_display(self, obj):
+        """Display lighter type with user-friendly name"""
+        return obj.get_lighter_type_display()
+    lighter_type_display.short_description = "Lighter Size"
+    lighter_type_display.admin_order_field = "lighter_type"
 
     @admin.action(description="Create / update Stripe Price ID")
     def sync_prices_to_stripe(self, request, queryset):
