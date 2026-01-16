@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-p7rjk2cg-ymow$(&!%1_4(v^3hro+5)0+5hq=(tjpd5ulhl3yr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() in ("1", "true", "yes")
 
-ALLOWED_HOSTS = ['100.82.23.47', 'spirit-beads.keycasey.com', 'localhost']
+ALLOWED_HOSTS = ['100.82.23.47', 'spirit-beads.keycasey.com', 'thebeadedcase.com', 'www.thebeadedcase.com', 'localhost']
 
 CSRF_TRUSTED_ORIGINS = ['https://spirit-beads.keycasey.com', 'http://localhost']
 
