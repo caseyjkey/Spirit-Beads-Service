@@ -121,13 +121,18 @@ def create_checkout_session(request):
             "quantity": quantity,
         })
 
+    # Get origin from request for dynamic redirects
+    origin = request.META.get('HTTP_ORIGIN', 'http://localhost:8080')
+    # Remove trailing slash for consistent URL construction
+    origin = origin.rstrip('/')
+
     try:
         session = stripe.checkout.Session.create(
             mode="payment",
             payment_method_types=["card"],
             line_items=line_items,
-            success_url=f"{settings.FRONTEND_URL}/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{settings.FRONTEND_URL}/cancel",
+            success_url=f"{origin}/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{origin}/cancel",
             shipping_address_collection={
                 "allowed_countries": ["US"]
             },
@@ -200,30 +205,80 @@ def stripe_webhook(request):
         # Debug session data
         print(f"Customer details: {session.get('customer_details', {})}")
         print(f"Shipping details: {session.get('shipping_details', {})}")
+        print(f"Session metadata: {session.get('metadata', {})}")
 
-        try:
-            order = Order.objects.get(stripe_session_id=session.id)
-            order.status = "paid"
-            order.stripe_payment_intent = session.payment_intent
-            order.customer_email = session.customer_details.email
-            
-            # Get address from customer_details (this is where Stripe Checkout stores it)
-            if (session.customer_details and 
-                hasattr(session.customer_details, 'address') and 
-                session.customer_details.address):
-                print(f"Address found in customer_details: {session.customer_details.address}")
-                order.shipping_address = session.customer_details.address
-            else:
-                print("No address found")
-                order.shipping_address = None
+        # Check if this is a custom order payment (has custom_request_id in metadata)
+        custom_request_id = session.metadata.get('custom_request_id')
+
+        if custom_request_id:
+            print(f"Processing custom order payment for request_id: {custom_request_id}")
+            try:
+                from custom_orders.models import CustomOrderRequest
+                from custom_orders.utils import send_payment_confirmation_email
+                from decimal import Decimal
+
+                custom_request = CustomOrderRequest.objects.get(id=custom_request_id)
+
+                # Create Order for custom order
+                import uuid
+                order_id = uuid.uuid4()
+                order = Order.objects.create(
+                    id=order_id,
+                    stripe_session_id=session.id,
+                    stripe_payment_intent=session.payment_intent,
+                    amount_total=int(session.amount_total),  # Amount in cents
+                    currency="usd",
+                    status="paid",
+                    customer_email=session.customer_details.email,
+                    is_custom_order=True,
+                )
+
+                # Link order to custom request
+                custom_request.related_order = order
+                custom_request.status = 'paid'
+                custom_request.stripe_payment_intent = session.payment_intent
+                custom_request.save()
+
+                print(f"Custom Order {order.id} created and linked to request {custom_request_id}")
+
+                # Send payment confirmation email
+                try:
+                    send_payment_confirmation_email(custom_request, order)
+                    print(f"Payment confirmation email sent to {custom_request.email}")
+                except Exception as email_error:
+                    print(f"Error sending payment confirmation email: {email_error}")
+
+            except CustomOrderRequest.DoesNotExist:
+                print(f"Custom order request {custom_request_id} not found")
+            except Exception as e:
+                print(f"Error processing custom order payment: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            # Regular product order
+            try:
+                order = Order.objects.get(stripe_session_id=session.id)
+                order.status = "paid"
+                order.stripe_payment_intent = session.payment_intent
+                order.customer_email = session.customer_details.email
                 
-            order.save()
-            print(f"Order {order.id} marked as paid")
-        except Order.DoesNotExist:
-            print(f"Order with session_id {session.id} not found")
-        except Exception as e:
-            print(f"Error updating order: {e}")
-            import traceback
-            traceback.print_exc()
+                # Get address from customer_details (this is where Stripe Checkout stores it)
+                if (session.customer_details and 
+                    hasattr(session.customer_details, 'address') and 
+                    session.customer_details.address):
+                    print(f"Address found in customer_details: {session.customer_details.address}")
+                    order.shipping_address = session.customer_details.address
+                else:
+                    print("No address found")
+                    order.shipping_address = None
+                    
+                order.save()
+                print(f"Order {order.id} marked as paid")
+            except Order.DoesNotExist:
+                print(f"Order with session_id {session.id} not found")
+            except Exception as e:
+                print(f"Error updating order: {e}")
+                import traceback
+                traceback.print_exc()
 
     return HttpResponse(status=200)

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'products',
     'payments',
     'orders',
+    'custom_orders',
 ]
 
 MIDDLEWARE = [
@@ -167,3 +168,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+# Email settings (Namecheap)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'mail.privateemail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('NAMECHEAP_EMAIL')
+EMAIL_HOST_PASSWORD = os.getenv('NAMECHEAP_EMAIL_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('NAMECHEAP_EMAIL')
+SERVER_EMAIL = os.getenv('NAMECHEAP_EMAIL')

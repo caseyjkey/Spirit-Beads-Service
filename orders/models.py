@@ -26,6 +26,8 @@ class Order(models.Model):
 
     shipping_address = models.JSONField(blank=True, null=True)
 
+    is_custom_order = models.BooleanField(default=False, help_text="Whether this is a custom order")
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
