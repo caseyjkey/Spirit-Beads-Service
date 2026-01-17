@@ -257,23 +257,35 @@ def stripe_webhook(request):
         else:
             # Regular product order
             try:
+                from orders.utils import send_order_confirmation_email
+
                 order = Order.objects.get(stripe_session_id=session.id)
                 order.status = "paid"
                 order.stripe_payment_intent = session.payment_intent
                 order.customer_email = session.customer_details.email
-                
+
                 # Get address from customer_details (this is where Stripe Checkout stores it)
-                if (session.customer_details and 
-                    hasattr(session.customer_details, 'address') and 
+                if (session.customer_details and
+                    hasattr(session.customer_details, 'address') and
                     session.customer_details.address):
                     print(f"Address found in customer_details: {session.customer_details.address}")
                     order.shipping_address = session.customer_details.address
                 else:
                     print("No address found")
                     order.shipping_address = None
-                    
+
                 order.save()
                 print(f"Order {order.id} marked as paid")
+
+                # Send order confirmation email
+                try:
+                    send_order_confirmation_email(order)
+                    print(f"Order confirmation email sent to {order.customer_email}")
+                except Exception as email_error:
+                    print(f"Error sending order confirmation email: {email_error}")
+                    import traceback
+                    traceback.print_exc()
+
             except Order.DoesNotExist:
                 print(f"Order with session_id {session.id} not found")
             except Exception as e:
