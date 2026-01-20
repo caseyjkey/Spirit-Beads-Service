@@ -204,8 +204,17 @@ def create_checkout_session(request):
             shipping_options=shipping_options,
             success_url=f"{origin}/success?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{origin}/cancel",
-            # Remove country restriction - allow all countries
-            shipping_address_collection={"allowed_countries": []},  # Empty list = all countries
+            # Allow shipping to most countries - Stripe requires explicit country list
+            shipping_address_collection={
+                "allowed_countries": [
+                    "US", "CA", "GB", "AU", "DE", "FR", "ES", "IT", "NL", "BE", "AT", "CH",
+                    "IE", "PT", "SE", "NO", "DK", "FI", "PL", "CZ", "GR", "HU", "RO",
+                    "BG", "HR", "SI", "SK", "LT", "LV", "EE", "MX", "BR", "AR", "CL",
+                    "CO", "PE", "UY", "NZ", "JP", "SG", "HK", "KR", "TW", "MY", "TH",
+                    "ID", "PH", "VN", "IN", "IL", "AE", "ZA", "NG", "KE", "EG", "MA",
+                    "TN", "ZA", "IS", "NO", "LU", "MT", "CY"
+                ]
+            },
         )
     except stripe.error.InvalidRequestError as e:
         # Common cause: using a test-mode price ID with a live-mode secret key (or vice versa)
