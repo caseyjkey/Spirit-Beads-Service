@@ -134,16 +134,3 @@ class Product(models.Model):
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f"Failed to sync product {self.id} to Stripe: {e}")
-
-class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/')
-    alt_text = models.CharField(max_length=200, blank=True)
-    is_primary = models.BooleanField(default=False)
-    order = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        ordering = ['order']
-
-    def __str__(self):
-        return f"{self.product.name} - Image {self.order}"

@@ -106,13 +106,17 @@ class CustomOrderRequestAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'email', 'status', 'quoted_price', 'created_at']
     list_filter = ['status', 'created_at']
     search_fields = ['name', 'email', 'description']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'images_display', 'stripe_payment_link']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'images_display', 'completion_images_display', 'stripe_payment_link']
     fieldsets = (
         ('Customer Information', {
             'fields': ('name', 'email')
         }),
         ('Request Details', {
             'fields': ('description', 'colors', 'images_display')
+        }),
+        ('Completion Photos', {
+            'fields': ('completion_images', 'completion_images_display'),
+            'description': 'Add photos of the finished piece to include in shipped notification'
         }),
         ('Status & Notes', {
             'fields': ('status', 'admin_notes', 'quoted_price', 'stripe_payment_link')
@@ -144,6 +148,24 @@ class CustomOrderRequestAdmin(admin.ModelAdmin):
         from django.utils.safestring import mark_safe
         return mark_safe(images_html)
     images_display.short_description = 'Images'
+
+    def completion_images_display(self, obj):
+        if not obj.completion_images:
+            return "No completion photos"
+        images_html = ""
+        for i, img in enumerate(obj.completion_images):
+            if isinstance(img, str) and img.startswith('data:'):
+                images_html += format_html('<div style="margin: 5px;">Photo {} (base64 encoded - {} bytes)</div>', i + 1, len(img) // 2)
+            elif isinstance(img, str) and img.startswith('blob:'):
+                blob_id = img.split('/')[-1] if '/' in img else 'unknown'
+                images_html += format_html('<div style="margin: 5px; color: #666;">Photo {} (blob URL - not accessible in admin)</div>', i + 1)
+            elif isinstance(img, str):
+                images_html += format_html('<div style="margin: 5px;"><a href="{}" target="_blank" rel="noopener">Photo {}</a></div>', img, i + 1)
+            else:
+                images_html += format_html('<div style="margin: 5px;">Photo {} (invalid format)</div>', i + 1)
+        from django.utils.safestring import mark_safe
+        return mark_safe(images_html)
+    completion_images_display.short_description = 'Completion Photos'
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('related_order')

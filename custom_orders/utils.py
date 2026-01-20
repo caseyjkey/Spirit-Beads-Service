@@ -122,7 +122,7 @@ def send_shipped_email(custom_request, order, tracking_number=None, carrier='USP
         'shipped_date': order.updated_at.strftime('%B %d, %Y'),
         'description': custom_request.description,
         'colors': custom_request.colors,
-        'product_image': None,  # Optional: could add photo of finished piece later
+        'product_image': custom_request.completion_images if custom_request.completion_images else None,
     })
 
     email = EmailMessage(
@@ -132,4 +132,17 @@ def send_shipped_email(custom_request, order, tracking_number=None, carrier='USP
         to=[custom_request.email],
     )
     email.content_subtype = 'html'
+
+    # Attach completion photos if they exist
+    for image_path in custom_request.completion_images or []:
+        if image_path.startswith(settings.MEDIA_URL):
+            relative_path = image_path[len(settings.MEDIA_URL):]
+            absolute_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+
+            if os.path.exists(absolute_path):
+                filename = os.path.basename(absolute_path)
+                mime_type, _ = mimetypes.guess_type(absolute_path)
+                with open(absolute_path, 'rb') as f:
+                    email.attach(filename, f.read(), mime_type or 'application/octet-stream')
+
     email.send(fail_silently=False)

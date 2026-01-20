@@ -44,6 +44,11 @@ class CustomOrderRequest(models.Model):
         null=True,
         help_text="Stripe Payment Intent ID after payment"
     )
+    completion_images = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Photos of the finished piece for shipped notification"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

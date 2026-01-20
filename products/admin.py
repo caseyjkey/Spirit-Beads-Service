@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Category, ProductImage
+from .models import Product, Category
 from .services.stripe_sync import ensure_stripe_product_and_price
 from .forms import ProductAdminForm
 
@@ -8,11 +8,6 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ['name']
-
-class ProductImageInline(admin.TabularInline):
-    model = ProductImage
-    extra = 1
-    fields = ['image', 'alt_text', 'is_primary', 'order']
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -72,8 +67,7 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ['name', 'category__name']
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['created_at', 'updated_at', 'stripe_product_id', 'stripe_price_id', 'currency']
-    inlines = [ProductImageInline]
-    
+
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'slug', 'lighter_type', 'category', 'description')
@@ -98,9 +92,3 @@ class ProductAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-
-@admin.register(ProductImage)
-class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ['product', 'alt_text', 'is_primary', 'order']
-    list_filter = ['is_primary']
-    ordering = ['product', 'order']
