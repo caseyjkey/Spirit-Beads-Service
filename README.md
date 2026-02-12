@@ -80,3 +80,4 @@ This project serves as a powerful example of a scalable e-commerce backend.
 - **[spirit-beads-service](https://github.com/caseyjkey/spirit-beads-service)** - Django e-commerce backend (service layer)
 - **[spirit-beads-ui](https://github.com/caseyjkey/spirit-beads-ui)** - React 18 production frontend
 - **[lighter-splitter](https://github.com/caseyjkey/lighter-splitter)** - Spirit Beads ecosystem - image processing pipeline
+
